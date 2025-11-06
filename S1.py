@@ -10,10 +10,10 @@ class SistemaGestao:
         self.root.geometry("1000x700")
         self.s2_url = os.getenv("S2_URL", "http://localhost:5000")
         self.log_requisicoes = []
-        self._build_ui()
+        self.construir_janela()
 
-    def call_api(self, metodo, endpoint, dados=None, on_done=None):
-        def worker():
+    def chamametodo(self, metodo, endpoint, dados=None, on_done=None):
+        def metodos():
             try:
                 url = f"{self.s2_url}{endpoint}"
                 if metodo == "GET":
@@ -23,7 +23,7 @@ class SistemaGestao:
                 elif metodo == "PUT":
                     resp = requests.put(url, json=dados, timeout=30)
                 else:
-                    raise ValueError("método inválido")
+                    raise ValueError("método inaálido")
                 try:
                     body = resp.json()
                 except Exception:
@@ -43,12 +43,11 @@ class SistemaGestao:
                 result = {"success": False, "error": str(e)}
             if on_done:
                 self.root.after(0, lambda: on_done(result))
-        threading.Thread(target=worker, daemon=True).start()
+        threading.Thread(target=metodos, daemon=True).start()
 
-    def _build_ui(self):
+    def construir_janela(self):
         top = ttk.Frame(self.root); top.pack(fill='x', padx=10, pady=5)
         ttk.Label(top, text=f"S2 URL: {self.s2_url}", foreground="#555").pack(side='left')
-
         nb = ttk.Notebook(self.root); nb.pack(fill='both', expand=True, padx=10, pady=10)
 
         frm_cli    = ttk.Frame(nb); nb.add(frm_cli, text="Clientes")
@@ -58,14 +57,15 @@ class SistemaGestao:
         frm_hist   = ttk.Frame(nb); nb.add(frm_hist, text="Histórico/Recomendações")
         frm_log    = ttk.Frame(nb); nb.add(frm_log, text="Log")
 
-        self._tab_clientes(frm_cli)
-        self._tab_produtos(frm_prod)
-        self._tab_estoque(frm_stock)
-        self._tab_pedidos(frm_ped)
-        self._tab_hist(frm_hist)
-        self._tab_log(frm_log)
+        self.clientes(frm_cli)
+        self.produtos(frm_prod)
+        self.estoque(frm_stock)
+        self.pedidos(frm_ped)
+        self.hist(frm_hist)
+        self.log(frm_log)
 
-    def _tab_clientes(self, parent):
+#clientes
+    def clientes(self, parent):
         box = ttk.LabelFrame(parent, text="Cadastrar Cliente"); box.pack(fill='x', padx=6, pady=6)
         ttk.Label(box, text="Nome").grid(row=0, column=0, padx=5, pady=5, sticky='e')
         ttk.Label(box, text="Documento").grid(row=1, column=0, padx=5, pady=5, sticky='e')
@@ -99,7 +99,7 @@ class SistemaGestao:
                 self.e_cli_nome.delete(0,tk.END); self.e_cli_doc.delete(0,tk.END)
             else:
                 messagebox.showerror("Erro", f"{res.get('error')}")
-        self.call_api("POST","/clientes",data,ok)
+        self.chamametodo("POST","/clientes",data,ok)
 
     def _load_clientes(self):
         def ok(res):
@@ -109,20 +109,20 @@ class SistemaGestao:
                     self.tree_cli.insert('', 'end', values=(c.get("id"),c.get("nome"),c.get("documento"),c.get("id_endereco")))
             else:
                 messagebox.showerror("Erro", f"{res.get('error')}")
-        self.call_api("GET","/clientes",on_done=ok)
+        self.chamametodo("GET","/clientes",on_done=ok)
 
-    def _tab_produtos(self, parent):
+#produtos
+    def produtos(self, parent):
         tips = ttk.Frame(parent); tips.pack(fill='x', padx=6, pady=4)
         ttk.Label(
             tips,
-            text="Produtos são criados no supabase. Este formulário também cria o estoque no Mongo.",
+            text="produtos são criados no supabase, este formulário também cria o estoque no Mongo.",
             foreground="#555"
         ).pack(side='left')
 
         form = ttk.LabelFrame(parent, text="Cadastrar Produto + Estoque")
         form.pack(fill='x', padx=6, pady=6)
 
-        # RDB
         ttk.Label(form, text="Descrição").grid(row=0, column=0, padx=5, pady=5, sticky='e')
         ttk.Label(form, text="Tamanho").grid(row=0, column=2, padx=5, pady=5, sticky='e')
         ttk.Label(form, text="Cor").grid(row=1, column=0, padx=5, pady=5, sticky='e')
@@ -133,7 +133,6 @@ class SistemaGestao:
         self.e_prod_cor  = ttk.Entry(form, width=12); self.e_prod_cor.grid(row=1, column=1, padx=5, pady=5)
         self.e_prod_pre  = ttk.Entry(form, width=12); self.e_prod_pre.grid(row=1, column=3, padx=5, pady=5)
 
-        # Estoque
         ttk.Label(form, text="Quantidade").grid(row=2, column=0, padx=5, pady=5, sticky='e')
         ttk.Label(form, text="Localização").grid(row=2, column=2, padx=5, pady=5, sticky='e')
         ttk.Label(form, text="Fornecedor - Nome").grid(row=3, column=0, padx=5, pady=5, sticky='e')
@@ -149,7 +148,6 @@ class SistemaGestao:
         ttk.Button(form, text="Cadastrar (RDB + Estoque)", command=self._criar_produto_full)\
             .grid(row=5, column=0, columnspan=4, pady=8)
 
-        # --- Lista de produtos (RDB) ---
         frame = ttk.LabelFrame(parent, text="Produtos (RDB)")
         frame.pack(fill='both', expand=True, padx=6, pady=6)
 
@@ -170,7 +168,7 @@ class SistemaGestao:
                     self.tree_prod.insert('', 'end', values=(p.get("id"),p.get("descricao"),p.get("tamanho"),p.get("cor"),p.get("preco")))
             else:
                 messagebox.showerror("Erro", f"{res.get('error')}")
-        self.call_api("GET","/produtos_rdb",on_done=ok)
+        self.chamametodo("GET","/produtos_rdb",on_done=ok)
         
     def _criar_produto_full(self):
         try:
@@ -211,10 +209,11 @@ class SistemaGestao:
             else:
                 messagebox.showerror("Erro", f"{res.get('error')}")
 
-        self.call_api("POST", "/produtos_full", data, ok)
+        self.chamametodo("POST", "/produtos_full", data, ok)
 
 
-    def _tab_estoque(self, parent):
+#estoque
+    def estoque(self, parent):
         actions = ttk.Frame(parent); actions.pack(fill='x', padx=6, pady=6)
         ttk.Button(actions, text="Sincronizar Estoque (RDB → Mongo)", command=self._sync_estoque).pack(side='left', padx=4)
         ttk.Button(actions, text="Atualizar Lista", command=self._load_estoque).pack(side='left', padx=4)
@@ -248,7 +247,7 @@ class SistemaGestao:
                 self._load_estoque()
             else:
                 messagebox.showerror("Erro", f"{res.get('error')}")
-        self.call_api("POST","/estoque/sync_from_rdb",on_done=ok)
+        self.chamametodo("POST","/estoque/sync_from_rdb",on_done=ok)
 
     def _load_estoque(self):
         def ok(res):
@@ -262,7 +261,7 @@ class SistemaGestao:
                     ))
             else:
                 messagebox.showerror("Erro", f"{res.get('error')}")
-        self.call_api("GET","/estoque",on_done=ok)
+        self.chamametodo("GET","/estoque",on_done=ok)
 
     def _upsert_estoque(self):
         try:
@@ -283,9 +282,11 @@ class SistemaGestao:
                 self._load_estoque()
             else:
                 messagebox.showerror("Erro", f"{res.get('error')}")
-        self.call_api("POST","/estoque",data,ok)
+        self.chamametodo("POST","/estoque",data,ok)
 
-    def _tab_pedidos(self, parent):
+
+#pedidos
+    def pedidos(self, parent):
         box = ttk.LabelFrame(parent, text="Registrar Pedido"); box.pack(fill='x', padx=6, pady=6)
         ttk.Label(box,text="Cliente ID").grid(row=0,column=0, padx=5,pady=5, sticky='e')
         ttk.Label(box,text="produto_id").grid(row=0,column=2, padx=5,pady=5, sticky='e')
@@ -330,7 +331,7 @@ class SistemaGestao:
             else:
                 messagebox.showerror("Erro", f"{res.get('error')}")
 
-        self.call_api("POST", "/pedidos", data, ok)
+        self.chamametodo("POST", "/pedidos", data, ok)
 
     def _graph_stats(self):
         def ok(res):
@@ -344,7 +345,7 @@ class SistemaGestao:
                 )
             else:
                 messagebox.showerror("Erro", f"{res.get('error')}")
-        self.call_api("GET", "/graph/stats", on_done=ok)
+        self.chamametodo("GET", "/graph/stats", on_done=ok)
 
     def _graph_last_edges(self):
         def ok(res):
@@ -363,9 +364,11 @@ class SistemaGestao:
                     )
             else:
                 self.tx_hist.insert(tk.END, f"Erro: {res.get('error')}\n")
-        self.call_api("GET", "/graph/last_edges?limit=15", on_done=ok)
+        self.chamametodo("GET", "/graph/last_edges?limit=15", on_done=ok)
 
-    def _tab_hist(self, parent):
+
+#historico
+    def hist(self, parent):
         box = ttk.LabelFrame(parent, text="Cliente"); box.pack(fill='x', padx=6, pady=6)
         ttk.Label(box, text="Cliente ID").grid(row=0,column=0, padx=5,pady=5, sticky='e')
         self.e_h_cid = ttk.Entry(box,width=12); self.e_h_cid.grid(row=0,column=1, padx=5,pady=5)
@@ -387,7 +390,7 @@ class SistemaGestao:
                     self.tx_hist.insert(tk.END, f"- {r.get('descricao')} (pid={r.get('produto_id')}) qtd={r.get('quantidade')} R${r.get('valor')} em {r.get('data')}\n")
             else:
                 self.tx_hist.insert(tk.END, f"Erro: {res.get('error')}\n")
-        self.call_api("GET", f"/historico/{cid}", on_done=ok)
+        self.chamametodo("GET", f"/historico/{cid}", on_done=ok)
 
     def _load_recs(self):
         try: cid=int(self.e_h_cid.get())
@@ -401,9 +404,11 @@ class SistemaGestao:
                     self.tx_hist.insert(tk.END, f"- {r.get('descricao')} (pid={r.get('produto_id')}) cat={r.get('categoria')} cor={r.get('cor')} score={r.get('score')}\n")
             else:
                 self.tx_hist.insert(tk.END, f"Erro: {res.get('error')}\n")
-        self.call_api("GET", f"/recomendacoes/{cid}", on_done=ok)
+        self.chamametodo("GET", f"/recomendacoes/{cid}", on_done=ok)
 
-    def _tab_log(self, parent):
+
+#logs
+    def log(self, parent):
         self.tx_log = tk.Text(parent, height=24)
         self.tx_log.pack(fill='both', expand=True, padx=6, pady=6)
         btns = ttk.Frame(parent); btns.pack(fill='x', padx=6, pady=6)

@@ -1,11 +1,13 @@
 from faker import Faker
 import random
 from supabase import create_client, Client
+from pymongo import MongoClient
+import random
+from pymongo.server_api import ServerApi
+from datetime import datetime
+from neo4j import GraphDatabase
 
-# ============================================================================================================
-# =========================== SUPABASE - PREENCHIMENTO DO RDB ================================================
-# ============================================================================================================
-
+#supabase
 supabase_url = 'https://vpjjcuhwcxgzcdthwguw.supabase.co'
 supabase_key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwampjdWh3Y3hnemNkdGh3Z3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzE3MTgsImV4cCI6MjA3NDUwNzcxOH0.MUxQ4mwD07P_wEoxxdy55zO695p9zygIHPR2ECMB2y8'
 supabase: Client = create_client(supabase_url, supabase_key)
@@ -113,16 +115,7 @@ if len(res_item.data) == 0:
 print("Banco preenchido!")
 
 
-# ============================================================================================================
-# =========================== MongoDB - PREENCHIMENTO DB1 ====================================================
-# ============================================================================================================
-
-
-from pymongo import MongoClient
-import random
-from pymongo.server_api import ServerApi
-from datetime import datetime
-
+#mongo
 connection_string = "mongodb+srv://wecon:1@cluster0.ei2fxgk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 print("Conectando ao MongoDB")
@@ -137,24 +130,24 @@ try:
     )
     
     mongo_client.admin.command('ping')
-    print("Conectado ao MongoDB com sucesso!")
+    print("conectado ao mongodb!")
     
     mongo_db = mongo_client['wecon']
     estoque_collection = mongo_db['estoque']
     
 except Exception as e:
-    print(f"Erro ao conectar com Mongo: {e}")
+    print(f"erro ao conectar com Mongo: {e}")
     exit(1)
 
 def popular_mongodb():
     try:
         if estoque_collection.count_documents({}) == 0:
-            print("Buscando produtos do Supabase")
+            print("buscando produtos do Supabase")
             
             produtos_supabase = supabase.table("produto").select("*").execute().data
             
             if not produtos_supabase:
-                print("Nenhum produto encontrado no Supabase")
+                print("nenhum produto encontrado no Supabase")
                 return
             
             documentos_estoque = []
@@ -188,43 +181,38 @@ def popular_mongodb():
                 documentos_estoque.append(documento_estoque)
             
             result = estoque_collection.insert_many(documentos_estoque)
-            print(f"Estoque populado no MongoDB com sucesso! {len(result.inserted_ids)} documentos inseridos.")
+            print(f"mongodb preenchido com sucesso! {len(result.inserted_ids)} documentos inseridos.")
             
         else:
             count = estoque_collection.count_documents({})
-            print(f"MongoDB já possui {count} documentos de estoque")
+            print(f"mongodb já possui {count} documentos de estoque")
             
     except Exception as e:
-        print(f"Erro ao popular MongoDB: {e}")
+        print(f"erro ao preencher mongodb: {e}")
         import traceback
         traceback.print_exc()
 
 popular_mongodb()
 
 total = estoque_collection.count_documents({})
-print(f"Total de documentos na collection 'estoque': {total}")
+print(f"esstoque: {total}")
+   
     
-# ============================================================================================================
-# ======================================= Neo4j - PREENCHIMENTO DB2 ==========================================
-# ============================================================================================================
-
-from neo4j import GraphDatabase
-import random
-from datetime import datetime
+#neo4j
 
 NEO4J_URI = "neo4j+s://4efaccc5.databases.neo4j.io"  
 NEO4J_USERNAME = "neo4j"  
 NEO4J_PASSWORD = "umFciuf3FKNJQscatpJ5fvHvxIYNkgzfuWDtfXOsPFc"  
 
 try:
-    print("Conectando ao Neo4j")
+    print("conectando ao Neo4j")
     neo4j_driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
     with neo4j_driver.session() as session:
-        result = session.run("RETURN 'Conectado ao Neo4j!' as message")
+        result = session.run("RETURN 'conectado ao Neo4j!' as message")
         print(f"{result.single()['message']}")
     
 except Exception as e:
-    print(f"Erro ao conectar com Neo4j: {e}")
+    print(f"erro ao conectar com Neo4j: {e}")
     exit(1)
 
 def criar_historico_neo4j():
@@ -232,7 +220,7 @@ def criar_historico_neo4j():
         with neo4j_driver.session() as session:
             session.run("MATCH (n) DETACH DELETE n")
             
-            print("Buscando clientes e pedidos do Supabase")
+            print("buscando clientes e pedidos do Supabase")
             
             clientes_supabase = supabase.table("cliente").select("*").execute().data
             print(f"{len(clientes_supabase)} clientes encontrados")
@@ -243,11 +231,11 @@ def criar_historico_neo4j():
             itens_pedido_supabase = supabase.table("item_pedido").select("*").execute().data
             print(f"{len(itens_pedido_supabase)} itens de pedido encontrados")
             
-            print("Buscando produtos do MongoDB...")
+            print("buscando produtos do MongoDB")
             produtos_mongo = list(estoque_collection.find({}))
             print(f"{len(produtos_mongo)} produtos no estoque")
             
-            print("Criando nós de clientes no Neo4j")
+            print("criando nós de clientes no Neo4j")
             for cliente in clientes_supabase:
                 session.run("""
                     CREATE (c:Cliente {
@@ -257,7 +245,7 @@ def criar_historico_neo4j():
                     })
                 """, id=cliente["id"], nome=cliente["nome"], documento=cliente["documento"])
             
-            print("Criando nós de produtos no Neo4j")
+            print("criando nós de produtos no Neo4j")
             for produto in produtos_mongo:
                 session.run("""
                     CREATE (p:Produto {
@@ -275,7 +263,7 @@ def criar_historico_neo4j():
                 categoria=produto.get("categoria", "Geral")
                 )
 
-            print("Criando histórico de compras")
+            print("criando histórico de compras")
             compras_criadas = 0
             
             for pedido in pedidos_supabase:
@@ -306,9 +294,8 @@ def criar_historico_neo4j():
                         
                         compras_criadas += 1
             
-            print(f"Histórico criado com sucesso! {compras_criadas} relações de compra")
+            print(f"histórico criado com sucesso! {compras_criadas} relações de compra")
             
-            print("Criando relações de recomendação...")
             
             session.run("""
                 MATCH (p1:Produto)
@@ -323,10 +310,8 @@ def criar_historico_neo4j():
                 MERGE (p1)-[:RECOMENDADO_PARA {tipo: "mesma_cor"}]->(p2)
             """)
             
-            print("Relações de recomendação criadas!")
-            
     except Exception as e:
-        print(f"Erro ao criar histórico: {e}")
+        print(f"erro ao criar histórico: {e}")
         import traceback
         traceback.print_exc()
 
@@ -344,7 +329,7 @@ def consultar_historico_cliente(cliente_id):
             historico = [dict(record) for record in result]
             return historico
     except Exception as e:
-        print(f"Erro ao consultar histórico: {e}")
+        print(f"erro ao consultar histórico: {e}")
         return []
 
 def consultar_recomendacoes(cliente_id):
@@ -363,7 +348,7 @@ def consultar_recomendacoes(cliente_id):
             recomendacoes = [dict(record) for record in result]
             return recomendacoes
     except Exception as e:
-        print(f"Erro ao consultar recomendações: {e}")
+        print(f"erro ao consultar recomendações: {e}")
         return []
 
 def consultar_estatisticas():
@@ -381,26 +366,24 @@ def consultar_estatisticas():
             stats = dict(result.single())
             return stats
     except Exception as e:
-        print(f"Erro ao consultar estatísticas: {e}")
+        print(f"erro ao consultar estatísticas: {e}")
         return {}
 
 if __name__ == "__main__":
-    print("Iniciando criação de histórico no Neo4j...")
-    
     criar_historico_neo4j()
     stats = consultar_estatisticas()
     for key, value in stats.items():
         print(f"   {key}: {value}")
     
-    print("\nHistórico do cliente 1:")
+    print("\nhistórico do cliente 1:")
     historico = consultar_historico_cliente(1)
     for compra in historico:
         print(f"   {compra['produto']} - {compra['quantidade']} unidades")
     
-    print("\nRecomendações para cliente 1:")
+    print("\nrecomendações para cliente 1:")
     recomendacoes = consultar_recomendacoes(1)
     for rec in recomendacoes:
         print(f"   {rec['produto']} ({rec['categoria']}) - score: {rec['score']}")
     
     neo4j_driver.close()
-    print("\nProcesso concluído!")
+    print("\nprocesso concluído!")

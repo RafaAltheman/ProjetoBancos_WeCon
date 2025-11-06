@@ -15,7 +15,6 @@ NEO4J_URI= os.getenv("NEO4J_URI", "neo4j+s://4efaccc5.databases.neo4j.io")
 NEO4J_USER= os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASS= os.getenv("NEO4J_PASS", "umFciuf3FKNJQscatpJ5fvHvxIYNkgzfuWDtfXOsPFc")
 TIMEOUT= 25
-
 SB_HEADERS = {
     "apikey": SUPABASE_KEY,
     "Authorization": f"Bearer {SUPABASE_KEY}",
@@ -23,7 +22,6 @@ SB_HEADERS = {
     "Accept": "application/json",
     "Prefer": "return=representation"
 }
-
 mongo = MongoClient(MONGO_URI)
 mdb = mongo["wecon"]
 neo4j_driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASS))
@@ -226,8 +224,7 @@ def estoque_sync_from_rdb():
         return jsonify({"success":False,"error":str(e)}),500
 
 
-
-def _ensure_prod_node(session, pid:int):
+def produtonode(session, pid:int):
     doc = mdb.estoque.find_one({"produto_id":pid}, {"_id":0})
     props = doc or {"produto_id":pid}
     session.run("""
@@ -334,7 +331,7 @@ def pedidos_create():
 
         with neo4j_driver.session() as s:
             s.run("MERGE (c:Cliente {id:$cid})", cid=cid)
-            _ensure_prod_node(s, pid)
+            produtonode(s, pid)
             s.run("""
                 MATCH (c:Cliente {id:$cid}), (p:Produto {produto_id:$pid})
                 CREATE (c)-[:COMPROU {
