@@ -8,8 +8,8 @@ from datetime import datetime
 from neo4j import GraphDatabase
 
 #supabase
-supabase_url = 'https://vpjjcuhwcxgzcdthwguw.supabase.co'
-supabase_key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwampjdWh3Y3hnemNkdGh3Z3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzE3MTgsImV4cCI6MjA3NDUwNzcxOH0.MUxQ4mwD07P_wEoxxdy55zO695p9zygIHPR2ECMB2y8'
+supabase_url = ''
+supabase_key = ''
 supabase: Client = create_client(supabase_url, supabase_key)
 
 fake = Faker('pt_BR')
@@ -116,7 +116,7 @@ print("Banco preenchido!")
 
 
 #mongo
-connection_string = "mongodb+srv://wecon:1@cluster0.ei2fxgk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+connection_string = ""
 
 print("Conectando ao MongoDB")
 
@@ -200,9 +200,9 @@ print(f"esstoque: {total}")
     
 #neo4j
 
-NEO4J_URI = "neo4j+s://4efaccc5.databases.neo4j.io"  
-NEO4J_USERNAME = "neo4j"  
-NEO4J_PASSWORD = "umFciuf3FKNJQscatpJ5fvHvxIYNkgzfuWDtfXOsPFc"  
+NEO4J_URI = ""  
+NEO4J_USERNAME = ""  
+NEO4J_PASSWORD = ""  
 
 try:
     print("conectando ao Neo4j")

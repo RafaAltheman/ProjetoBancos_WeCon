@@ -8,12 +8,12 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 #creds dos bancos
-SUPABASE_URL= os.getenv("SUPABASE_URL", "https://vpjjcuhwcxgzcdthwguw.supabase.co")
-SUPABASE_KEY= os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwampjdWh3Y3hnemNkdGh3Z3V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzE3MTgsImV4cCI6MjA3NDUwNzcxOH0.MUxQ4mwD07P_wEoxxdy55zO695p9zygIHPR2ECMB2y8")
-MONGO_URI= os.getenv("MONGO_URI", "mongodb+srv://wecon:1@cluster0.ei2fxgk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
-NEO4J_URI= os.getenv("NEO4J_URI", "neo4j+s://4efaccc5.databases.neo4j.io")
-NEO4J_USER= os.getenv("NEO4J_USER", "neo4j")
-NEO4J_PASS= os.getenv("NEO4J_PASS", "umFciuf3FKNJQscatpJ5fvHvxIYNkgzfuWDtfXOsPFc")
+SUPABASE_URL= os.getenv("SUPABASE_URL", "")
+SUPABASE_KEY= os.getenv("SUPABASE_KEY", "")
+MONGO_URI= os.getenv("MONGO_URI", "")
+NEO4J_URI= os.getenv("NEO4J_URI", "")
+NEO4J_USER= os.getenv("NEO4J_USER", "")
+NEO4J_PASS= os.getenv("NEO4J_PASS", "")
 TIMEOUT= 25
 SB_HEADERS = {
     "apikey": SUPABASE_KEY,
