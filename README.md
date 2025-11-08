@@ -1,5 +1,7 @@
 # Projeto Banco de Dados WeCon
 
+## Integrantes: Letizia Lowatzki Baptistella (22.125.063-2), Manuella Filipe Peres (22.224.029-3), Rafaela Altheman de Campos (22.125.062-4)
+
 ## 1. Explicação do tema escolhido
 O grupo escolheu realizar um projeto baseado em uma loja de roupas por conta do interesse e proximidade das integrantes com o assunto, inspirado na empresa "YouCom", a "WeCon" é uma marca de roupas, dentro do banco podemos acessar algumas ferramentas comuns dentro de uma loja de vestuário como: cadastro de clientes, estoque, histórico de compras, entre outras.
 
